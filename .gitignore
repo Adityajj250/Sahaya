@@ -23,3 +23,10 @@
 **/*.pfx
 **/*.pem
 **/*.key
+
+# Raw generated benchmark datasets are regenerable and intentionally not stored in Git.
+/elder-ml/data/
+/elder_vitals_14day/*.parquet
+/elder_vitals_14day/events.csv
+/elder_vitals_14day/persons.csv
+/elder_vitals_14day/sample_E1_day3_1000-1130.csv
