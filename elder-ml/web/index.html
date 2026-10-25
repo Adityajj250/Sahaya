@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CareSignal · Operations</title><link rel="stylesheet" href="/styles.css"></head>
+<body class="auth-check">
+  <section id="accessGate" class="access-gate hidden" aria-hidden="true">
+    <form id="accessForm" class="access-card">
+      <div class="brand-mark">✦</div><span class="micro-label">CARESIGNAL · ORGANISATION ACCESS</span>
+      <h1>Sign in to continue</h1><p>This dashboard is for authorised organisation staff.</p>
+      <label for="accessPassword">Access password</label><input id="accessPassword" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit">Continue</button><small id="accessError" role="status"></small>
+    </form>
+  </section>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">✦</div><div><b>CareSignal</b><small>CARE OPERATIONS</small></div></div>
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav-item active" id="dashboardNav"><span>▦</span> Alert dashboard</button>
+      <button class="nav-item" id="clientsNav"><span>♧</span> Client directory <span class="nav-count">05</span></button>
+      <button class="nav-item" id="inboxNav"><span>💬</span> WhatsApp inbox <span class="nav-count" id="inboxCount" style="display:none">0</span></button>
+      <div class="side-bottom"><div class="demo-state"><span class="demo-dot"></span><div><b>Training demo</b><small>Sample records · no live contacts</small></div></div><div class="side-user"><div class="avatar">OC</div><div><b>Operations team</b><small>Organisation view</small></div><span class="more">•••</span></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><div class="eyebrow" id="pageEyebrow">CARE NETWORK <span> / </span> ALERTS</div><h1 id="pageTitle">Good morning, team</h1><p class="subhead" id="pageSubhead">A focused view of client wellbeing and active care alerts.</p></div><div class="top-actions"><div class="connection"><span class="green-dot"></span> Replay connected</div><button class="wa-open-btn" id="openWhatsAppBtn" title="Open WhatsApp interface">💬 Open WhatsApp</button><button class="icon-btn" title="Reset training demo" id="resetBtn">↺</button><div class="avatar top-avatar">OC</div></div></header>
+      <section class="demo-banner"><div class="banner-icon">ⓘ</div><div><b>Training demo · sample client records</b><span>Contact numbers are reserved placeholders. This page is not connected to care providers or emergency services.</span></div><div class="banner-clock"><span class="live-pulse"></span><span id="runLabel">READY</span></div></section>
+      <section class="control-row"><div class="sim-clock"><div class="clock-icon">◷</div><div><span class="micro-label">DEMO TIMELINE</span><b id="simTime">Loading record…</b></div><span class="clock-separator"></span><div class="speed-control"><span class="micro-label">PLAYBACK RATE</span><select id="speed"><option value="2">2×</option><option value="4">4×</option><option value="60">60×</option><option value="240">240×</option><option value="3600" selected>3,600× · Demo</option></select></div></div><div class="control-buttons"><button class="btn btn-quiet" id="pauseBtn">Ⅱ&nbsp; Pause</button><button class="btn btn-primary" id="startBtn">▶&nbsp; Start</button></div></section>
+      <section class="stat-grid"><article class="stat-card"><div class="stat-top"><span class="stat-icon blue">♧</span><span class="stat-tag">CLIENTS</span></div><strong id="clientCount">05</strong><div class="stat-foot">Profiles in this organisation</div></article><article class="stat-card"><div class="stat-top"><span class="stat-icon blue">◷</span><span class="stat-tag">ALERTS REACHED</span></div><strong id="alertTotal">00</strong><div class="stat-foot">Requiring team follow-up</div></article><article class="stat-card stat-yellow"><div class="stat-top"><span class="stat-icon yellow">⌁</span><span class="stat-tag">YELLOW ZONE</span></div><strong id="yellowTotal">00</strong><div class="stat-foot">Review and monitor</div></article><article class="stat-card stat-red"><div class="stat-top"><span class="stat-icon red">✳</span><span class="stat-tag">RED ZONE</span></div><strong id="redTotal">00</strong><div class="stat-foot">Priority team response</div></article></section>
+      <section id="dashboardView" class="alerts-grid">
+        <section class="alert-panel panel red-panel"><div class="alert-heading"><div class="zone-mark red-mark">✳</div><div><h2>Red zone</h2><p>Priority response · falls and urgent changes</p></div><span class="zone-count red-count" id="redBadge">0</span></div><div id="redAlerts" class="alert-list"><div class="empty-state"><span>✓</span><b>No current red alerts</b><small>New reports will appear here</small></div></div></section>
+        <section class="alert-panel panel yellow-panel"><div class="alert-heading"><div class="zone-mark yellow-mark">⌁</div><div><h2>Yellow zone</h2><p>Follow-up · review for worsening changes</p></div><span class="zone-count yellow-count" id="yellowBadge">0</span></div><div id="yellowAlerts" class="alert-list"><div class="empty-state"><span>✓</span><b>No current yellow alerts</b><small>New reports will appear here</small></div></div></section>
+      </section>
+      <section id="directoryView" class="panel directory-view hidden"><div class="panel-heading"><div><h2>Client directory</h2><p>Open a profile for care context, contact details, history and current readings.</p></div><div class="updated"><span class="green-dot"></span> Training records</div></div><div id="clientList" class="client-list"></div></section>
+
+      <!-- WhatsApp inbox section -->
+      <section id="inboxView" class="panel hidden">
+        <div class="panel-heading">
+          <div>
+            <h2>WhatsApp inbox</h2>
+            <p>Messages received from the WhatsApp interface · including voice notes and text from care clients.</p>
+          </div>
+          <div class="updated">
+            <span id="inboxLive" class="green-dot" style="display:none"></span>
+            <span id="inboxMeta">No messages yet</span>
+          </div>
+        </div>
+        <div id="inboxList" class="inbox-list">
+          <div class="empty-state"><span>💬</span><b>No messages received yet</b><small>Send a message from the WhatsApp interface — it will appear here.</small></div>
+        </div>
+        <div class="inbox-open-wa">
+          <button class="btn btn-primary" id="openWaFromInbox">Open WhatsApp interface →</button>
+          <small>Messages you send from the WhatsApp interface are forwarded here in real time.</small>
+        </div>
+      </section>
+
+      <footer><span>CARESIGNAL · TRAINING ENVIRONMENT</span><span>Model replay: M3 + alert rules <i>·</i> Sample records only</span></footer>
+    </main>
+  </div>
+  <div id="profileOverlay" class="overlay" aria-hidden="true"><div class="drawer"><div class="drawer-top"><div><span class="micro-label">CLIENT PROFILE</span><div id="drawerName" class="drawer-title"></div></div><button class="icon-btn" id="closeDrawer">×</button></div><div id="drawerContent"></div></div></div>
+
+  <!-- WhatsApp notification popup -->
+  <div id="waPopup" class="wa-popup" aria-hidden="true">
+    <div class="wa-popup-inner">
+      <div class="wa-popup-icon">💬</div>
+      <div class="wa-popup-body">
+        <div class="wa-popup-label">NEW WHATSAPP MESSAGE</div>
+        <div class="wa-popup-name" id="waPopupName">Margaret Chen</div>
+        <div class="wa-popup-preview" id="waPopupPreview">Voice note · 0:12</div>
+      </div>
+      <div class="wa-popup-actions">
+        <button class="wa-popup-btn" id="waPopupView">View inbox</button>
+        <button class="wa-popup-dismiss" id="waPopupDismiss">×</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div><script src="/app.js"></script>
+</body></html>

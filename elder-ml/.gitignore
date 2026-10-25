@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+.vercel/
+.env.local
+.env.*.local
+reports/whatsapp_verify_token.txt
+reports/whatsapp_inbox.sqlite
+reports/whatsapp-webhook.log
+reports/whatsapp-webhook-error.log
+reports/cloudflared-webhook.log
+reports/cloudflared-webhook-error.log
+.env
+
+.vercel
+.env*

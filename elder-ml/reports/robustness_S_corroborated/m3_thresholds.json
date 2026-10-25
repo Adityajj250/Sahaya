@@ -1,0 +1,5 @@
+{
+  "yellow": 0.8596393054850301,
+  "orange": 0.9796061626516269,
+  "protocol": "M3 trained on original synthetic set; thresholds selected from original grouped OOF predictions"
+}

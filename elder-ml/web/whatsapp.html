@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsApp · Elder Care</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --wa-green: #25d366;
+      --wa-dark-green: #075e54;
+      --wa-light-green: #dcf8c6;
+      --wa-teal: #128c7e;
+      --wa-bg: #efeae2;
+      --wa-bg-dark: #111b21;
+      --wa-panel: #ffffff;
+      --wa-panel-dark: #202c33;
+      --wa-appbar: #075e54;
+      --wa-incoming: #ffffff;
+      --wa-outgoing: #dcf8c6;
+      --wa-text: #111b21;
+      --wa-muted: #667781;
+      --wa-border: #e9edef;
+      --wa-input-bg: #f0f2f5;
+      --send-green: #25d366;
+      --recording-red: #ff3b30;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--wa-bg);
+      overflow: hidden;
+    }
+
+    /* ── Layout ── */
+    .wa-shell {
+      display: flex;
+      height: 100vh;
+      max-width: 1440px;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.07);
+    }
+
+    /* ── Left panel – chat list ── */
+    .wa-sidebar {
+      width: 360px;
+      min-width: 300px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--wa-border);
+      display: flex;
+      flex-direction: column;
+      background: var(--wa-panel);
+    }
+    .wa-sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #f0f2f5;
+      height: 60px;
+    }
+    .wa-sidebar-header .avatar { width:40px; height:40px; border-radius:50%; background:var(--wa-teal); display:grid; place-items:center; color:#fff; font-weight:700; font-size:16px; }
+    .wa-header-icons { display:flex; gap:6px; }
+    .wa-icon-btn { border:0; background:transparent; cursor:pointer; color:var(--wa-muted); padding:6px; border-radius:50%; }
+    .wa-icon-btn:hover { background:rgba(0,0,0,.07); }
+    .wa-icon-btn svg { display:block; }
+
+    .wa-search { padding:8px 12px; background:#fff; }
+    .wa-search input {
+      width:100%; height:35px; padding:0 36px 0 38px;
+      border:0; border-radius:8px; background:var(--wa-input-bg);
+      font:14px inherit; color:var(--wa-text); outline:none;
+    }
+    .wa-search-wrap { position:relative; }
+    .wa-search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--wa-muted); pointer-events:none; }
+
+    .wa-chat-list { flex:1; overflow-y:auto; }
+    .wa-chat-item {
+      display:flex; align-items:center; gap:12px; padding:10px 16px 10px 12px;
+      cursor:pointer; border-bottom:1px solid var(--wa-border);
+      transition: background .12s;
+    }
+    .wa-chat-item:hover, .wa-chat-item.active { background:#f0f2f5; }
+    .wa-chat-item .chat-avatar { width:49px; height:49px; border-radius:50%; flex-shrink:0; background:var(--wa-teal); display:grid; place-items:center; color:#fff; font-weight:700; font-size:18px; }
+    .wa-chat-item .chat-body { flex:1; min-width:0; }
+    .wa-chat-item .chat-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px; }
+    .wa-chat-item .chat-name { font:600 15px inherit; color:var(--wa-text); }
+    .wa-chat-item .chat-time { font-size:12px; color:var(--wa-muted); white-space:nowrap; }
+    .wa-chat-item .chat-preview { font-size:13px; color:var(--wa-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wa-unread-badge { min-width:20px; height:20px; border-radius:10px; background:var(--wa-green); color:#fff; font:700 11px inherit; display:grid; place-items:center; padding:0 5px; margin-left:4px; }
+
+    /* ── Right panel – active chat ── */
+    .wa-chat-panel {
+      flex:1; display:flex; flex-direction:column;
+      background: var(--wa-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='732' opacity='.04'%3E%3Ccircle cx='206' cy='366' r='200' fill='%2325d366'/%3E%3C/svg%3E") center/cover;
+      min-width:0;
+    }
+
+    .wa-chat-header {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 16px; background:#f0f2f5; height:60px;
+      border-bottom:1px solid var(--wa-border);
+    }
+    .wa-chat-header .hdr-avatar { width:40px; height:40px; border-radius:50%; background:var(--wa-teal); display:grid; place-items:center; color:#fff; font-weight:700; font-size:16px; }
+    .wa-chat-header .hdr-info { flex:1; }
+    .wa-chat-header .hdr-name { font:600 15px inherit; color:var(--wa-text); }
+    .wa-chat-header .hdr-status { font-size:12px; color:var(--wa-muted); }
+    .wa-chat-header .hdr-actions { display:flex; gap:4px; }
+
+    /* ── Message stream ── */
+    .wa-messages {
+      flex:1; overflow-y:auto; padding:16px 8%;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .wa-messages::-webkit-scrollbar { width:6px; }
+    .wa-messages::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:3px; }
+
+    .wa-day-label {
+      align-self:center; background:rgba(255,255,255,.92);
+      border-radius:8px; padding:5px 12px; font-size:12px;
+      color:var(--wa-text); margin:8px 0; box-shadow:0 1px 3px rgba(0,0,0,.1);
+    }
+    .wa-bubble {
+      max-width:65%; padding:6px 9px 8px;
+      border-radius:8px; position:relative;
+      box-shadow:0 1px 2px rgba(0,0,0,.12);
+      word-wrap:break-word;
+    }
+    .wa-bubble.incoming {
+      background:var(--wa-incoming); align-self:flex-start;
+      border-radius:0 8px 8px 8px; margin-left:4px;
+    }
+    .wa-bubble.outgoing {
+      background:var(--wa-outgoing); align-self:flex-end;
+      border-radius:8px 0 8px 8px; margin-right:4px;
+    }
+    .wa-bubble .bubble-text { font-size:14.5px; color:var(--wa-text); line-height:1.45; }
+    .wa-bubble .bubble-meta {
+      display:flex; align-items:center; justify-content:flex-end; gap:4px;
+      margin-top:3px;
+    }
+    .wa-bubble .bubble-time { font-size:11px; color:var(--wa-muted); }
+    .wa-bubble .bubble-tick { color:#53bdeb; font-size:12px; }
+    .wa-bubble.incoming .bubble-tick { display:none; }
+
+    /* voice bubble */
+    .voice-bubble {
+      display:flex; align-items:center; gap:8px;
+      background:inherit; min-width:200px;
+    }
+    .voice-play-btn {
+      width:36px; height:36px; border-radius:50%; border:0;
+      background:var(--wa-teal); color:#fff; cursor:pointer; flex-shrink:0;
+      display:grid; place-items:center; font-size:14px;
+    }
+    .voice-waveform {
+      flex:1; height:30px; display:flex; align-items:center; gap:1.5px;
+    }
+    .voice-waveform span {
+      display:inline-block; width:2.5px; border-radius:2px;
+      background:var(--wa-teal); min-height:3px;
+      transition: background .2s;
+    }
+    .voice-duration { font-size:11px; color:var(--wa-muted); white-space:nowrap; }
+
+    /* ── Input bar ── */
+    .wa-input-bar {
+      display:flex; align-items:flex-end; gap:8px;
+      padding:8px 12px; background:var(--wa-panel);
+    }
+    .wa-input-wrap {
+      flex:1; background:var(--wa-input-bg); border-radius:24px;
+      display:flex; align-items:flex-end; padding:6px 12px; gap:8px;
+    }
+    .wa-emoji-btn, .wa-attach-btn { border:0; background:transparent; cursor:pointer; color:var(--wa-muted); padding:2px; flex-shrink:0; }
+    .wa-text-input {
+      flex:1; border:0; background:transparent; outline:none; resize:none;
+      font:15px inherit; color:var(--wa-text); max-height:100px;
+      line-height:1.4; padding:3px 0; min-height:24px;
+    }
+    .wa-text-input::placeholder { color:var(--wa-muted); }
+    .wa-send-btn, .wa-mic-btn {
+      width:52px; height:52px; border-radius:50%; border:0;
+      cursor:pointer; display:grid; place-items:center; flex-shrink:0;
+      background:var(--wa-green); color:#fff;
+      box-shadow:0 2px 8px rgba(37,211,102,.35);
+      transition: background .15s, transform .1s;
+    }
+    .wa-send-btn:hover, .wa-mic-btn:hover { background:var(--wa-teal); }
+    .wa-send-btn:active, .wa-mic-btn:active { transform:scale(.93); }
+    .wa-send-btn { display:none; }
+
+    /* ── Recording UI ── */
+    .wa-recording-bar {
+      display:none; align-items:center; gap:10px;
+      padding:10px 14px; background:#fff; border-top:1px solid var(--wa-border);
+    }
+    .wa-recording-bar.active { display:flex; }
+    .wa-rec-dot { width:10px; height:10px; border-radius:50%; background:var(--recording-red); animation:pulse-rec 1s infinite; flex-shrink:0; }
+    @keyframes pulse-rec { 0%,100%{opacity:1}50%{opacity:.25} }
+    .wa-rec-timer { font:500 16px inherit; color:var(--wa-text); min-width:48px; }
+    .wa-rec-waveform { flex:1; height:32px; display:flex; align-items:center; gap:2px; overflow:hidden; }
+    .wa-rec-waveform span { display:inline-block; width:3px; border-radius:2px; background:#25d366; transition:height .1s; }
+    .wa-rec-cancel { border:0; background:transparent; cursor:pointer; color:var(--wa-muted); font-size:13px; padding:4px 8px; border-radius:6px; }
+    .wa-rec-cancel:hover { background:#fee; color:var(--recording-red); }
+    .wa-rec-send { width:40px; height:40px; border-radius:50%; border:0; background:var(--wa-green); color:#fff; cursor:pointer; display:grid; place-items:center; }
+
+    /* ── Encryption notice ── */
+    .wa-enc-notice {
+      align-self:center; background:rgba(255,255,255,.85); border-radius:8px;
+      padding:6px 14px; font-size:12px; color:var(--wa-text); text-align:center;
+      margin:8px auto 12px; max-width:85%; box-shadow:0 1px 2px rgba(0,0,0,.08);
+    }
+
+    /* ── Empty state ── */
+    .wa-welcome {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:18px; padding:40px;
+      background: linear-gradient(160deg,#f0f2f5 60%,#e9f5ef 100%);
+    }
+    .wa-welcome-logo { font-size:80px; }
+    .wa-welcome h2 { font:700 28px inherit; color:var(--wa-dark-green); }
+    .wa-welcome p { font-size:14px; color:var(--wa-muted); text-align:center; max-width:360px; }
+    .wa-welcome small { font-size:12px; color:var(--wa-muted); }
+
+    /* ── Scrollbar ── */
+    .wa-chat-list::-webkit-scrollbar { width:5px; }
+    .wa-chat-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
+
+    /* ── Responsive ── */
+    @media(max-width:700px) {
+      .wa-sidebar { width:100%; display:none; }
+      .wa-sidebar.mobile-visible { display:flex; }
+      .wa-chat-panel { display:flex; }
+    }
+
+    /* ── Back-to-elderml button ── */
+    .wa-back-link {
+      position:fixed; bottom:18px; right:18px; z-index:100;
+      background:var(--wa-dark-green); color:#fff;
+      border:0; border-radius:24px; padding:10px 18px 10px 14px;
+      font:600 13px inherit; cursor:pointer; display:flex; align-items:center; gap:7px;
+      box-shadow:0 4px 16px rgba(7,94,84,.35); text-decoration:none;
+    }
+    .wa-back-link:hover { background:var(--wa-teal); }
+  </style>
+</head>
+<body>
+<div class="wa-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="wa-sidebar">
+    <div class="wa-sidebar-header">
+      <div class="avatar">EC</div>
+      <div class="wa-header-icons">
+        <button class="wa-icon-btn" title="Community">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        </button>
+        <button class="wa-icon-btn" title="New chat">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+        </button>
+        <button class="wa-icon-btn" title="More options">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="wa-search">
+      <div class="wa-search-wrap">
+        <svg class="wa-search-icon" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" placeholder="Search or start new chat">
+      </div>
+    </div>
+    <div class="wa-chat-list" id="chatList"></div>
+  </aside>
+
+  <!-- ── Chat panel ── -->
+  <div class="wa-chat-panel" id="chatPanel">
+    <div class="wa-welcome" id="welcomeScreen">
+      <div class="wa-welcome-logo">💬</div>
+      <h2>WhatsApp</h2>
+      <p>Send messages to the CareSignal care team. Voice notes are automatically transcribed and forwarded to the dashboard.</p>
+      <small>🔒 End-to-end encrypted · Select a chat to begin</small>
+    </div>
+
+    <div id="activeChatView" style="display:none;flex-direction:column;flex:1;min-height:0;">
+      <div class="wa-chat-header">
+        <div class="hdr-avatar" id="hdrAvatar">CS</div>
+        <div class="hdr-info">
+          <div class="hdr-name" id="hdrName">Care Team</div>
+          <div class="hdr-status" id="hdrStatus">online</div>
+        </div>
+        <div class="hdr-actions">
+          <button class="wa-icon-btn" title="Video call"><svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg></button>
+          <button class="wa-icon-btn" title="Voice call"><svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg></button>
+          <button class="wa-icon-btn" title="Search"><svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></button>
+          <button class="wa-icon-btn" title="More"><svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+        </div>
+      </div>
+
+      <div class="wa-messages" id="messageStream">
+        <div class="wa-enc-notice">🔒 Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.</div>
+        <div class="wa-day-label" id="dayLabel">Today</div>
+      </div>
+
+      <!-- Recording bar -->
+      <div class="wa-recording-bar" id="recordingBar">
+        <div class="wa-rec-dot"></div>
+        <span class="wa-rec-timer" id="recTimer">0:00</span>
+        <div class="wa-rec-waveform" id="recWaveform"></div>
+        <button class="wa-rec-cancel" id="recCancel">✕ Cancel</button>
+        <button class="wa-rec-send" id="recSend" title="Send voice note">
+          <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M2 21l21-9-21-9v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+
+      <!-- Input bar -->
+      <div class="wa-input-bar">
+        <div class="wa-input-wrap">
+          <button class="wa-emoji-btn" title="Emoji">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+          </button>
+          <textarea class="wa-text-input" id="textInput" placeholder="Type a message" rows="1"></textarea>
+          <button class="wa-attach-btn" title="Attach">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="transform:rotate(-45deg)"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+          </button>
+        </div>
+        <button class="wa-send-btn" id="sendBtn" title="Send">
+          <svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M2 21l21-9-21-9v7l15 2-15 2z"/></svg>
+        </button>
+        <button class="wa-mic-btn" id="micBtn" title="Voice note">
+          <svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93H2c0 4.97 3.57 9.1 8 9.9V22h4v-4.07c4.43-.8 8-4.93 8-9.93h-2c0 4.08-3.06 7.44-7 7.93z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Back to dashboard -->
+<a class="wa-back-link" href="/index.html">
+  <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+  Back to dashboard
+</a>
+
+<script>
+// ── Contacts / chat data ──────────────────────────────────────────────
+const CONTACTS = [
+  { id: 'elder1', name: 'Margaret Chen', initials: 'MC', status: 'online', unread: 2,
+    preview: 'I've been feeling a bit dizzy today', color: '#6a5acd' },
+  { id: 'elder2', name: 'Robert Williams', initials: 'RW', status: 'last seen 2h ago', unread: 0,
+    preview: '🎤 Voice note', color: '#2e8b57' },
+  { id: 'elder3', name: 'Dorothy Patel', initials: 'DP', status: 'online', unread: 1,
+    preview: 'My knee is hurting again', color: '#b8860b' },
+  { id: 'careteam', name: 'Care Team', initials: 'CT', status: 'online', unread: 0,
+    preview: 'All reports reviewed ✓', color: '#075e54' },
+];
+
+const SEED_MESSAGES = {
+  elder1: [
+    { id:'m1', type:'text', from:'other', text:'Hello, I need to report something.', time: minsAgo(42) },
+    { id:'m2', type:'text', from:'self', text:'Hi Margaret, of course. What's happening?', time: minsAgo(41) },
+    { id:'m3', type:'text', from:'other', text:'I've been feeling a bit dizzy today and my legs feel weak when I stand up.', time: minsAgo(40) },
+    { id:'m4', type:'voice', from:'other', duration: 14, samples:[3,5,8,12,9,6,14,18,10,7,4,5,8,11,9,6,3,7,12,15], time: minsAgo(38) },
+  ],
+  elder2: [
+    { id:'m5', type:'text', from:'other', text:'Good morning.', time: minsAgo(130) },
+    { id:'m6', type:'voice', from:'other', duration: 22, samples:[5,9,14,18,20,16,11,8,13,17,12,7,5,9,14,18,20,16,11,8], time: minsAgo(128) },
+    { id:'m7', type:'text', from:'self', text:'Received, thank you Robert. We'll review this shortly.', time: minsAgo(125) },
+  ],
+  elder3: [
+    { id:'m8', type:'text', from:'other', text:'My knee is hurting again. Should I take extra pain medication?', time: minsAgo(20) },
+  ],
+  careteam: [
+    { id:'m9', type:'text', from:'self', text:'All reports reviewed ✓', time: minsAgo(5) },
+  ],
+};
+
+function minsAgo(m) { return new Date(Date.now() - m * 60000); }
+function fmtTime(d) { return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); }
+function nowTime() { return new Date(); }
+
+// in-memory message state
+const chatMessages = JSON.parse(JSON.stringify(SEED_MESSAGES, (k,v) => v instanceof Date ? v.toISOString() : v));
+Object.keys(chatMessages).forEach(id => {
+  chatMessages[id] = chatMessages[id].map(m => ({...m, time: new Date(m.time)}));
+});
+
+let activeChat = null;
+
+// ── Render chat list ──────────────────────────────────────────────────
+function renderChatList() {
+  const list = document.getElementById('chatList');
+  list.innerHTML = CONTACTS.map(c => `
+    <div class="wa-chat-item${activeChat === c.id ? ' active' : ''}" onclick="openChat('${c.id}')">
+      <div class="chat-avatar" style="background:${c.color}">${c.initials}</div>
+      <div class="chat-body">
+        <div class="chat-top">
+          <span class="chat-name">${c.name}</span>
+          <span class="chat-time">${chatTimeLabel(c.id)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span class="chat-preview">${c.preview}</span>
+          ${c.unread > 0 ? `<span class="wa-unread-badge">${c.unread}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function chatTimeLabel(id) {
+  const msgs = chatMessages[id] || [];
+  if (!msgs.length) return '';
+  const last = msgs[msgs.length-1].time;
+  const now = new Date();
+  const diffMin = (now - last) / 60000;
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${Math.floor(diffMin)}m ago`;
+  const diffH = diffMin / 60;
+  if (diffH < 24) return last.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  return last.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+// ── Open a chat ───────────────────────────────────────────────────────
+function openChat(id) {
+  activeChat = id;
+  const contact = CONTACTS.find(c => c.id === id);
+  contact.unread = 0;
+
+  document.getElementById('welcomeScreen').style.display = 'none';
+  const view = document.getElementById('activeChatView');
+  view.style.display = 'flex';
+
+  document.getElementById('hdrAvatar').textContent = contact.initials;
+  document.getElementById('hdrAvatar').style.background = contact.color;
+  document.getElementById('hdrName').textContent = contact.name;
+  document.getElementById('hdrStatus').textContent = contact.status;
+
+  renderMessages(id);
+  renderChatList();
+
+  // scroll to bottom
+  setTimeout(() => {
+    const stream = document.getElementById('messageStream');
+    stream.scrollTop = stream.scrollHeight;
+  }, 50);
+}
+
+// ── Render messages ───────────────────────────────────────────────────
+function renderMessages(id) {
+  const stream = document.getElementById('messageStream');
+  const msgs = chatMessages[id] || [];
+
+  stream.innerHTML = `<div class="wa-enc-notice">🔒 Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.</div>
+    <div class="wa-day-label">Today</div>`;
+
+  msgs.forEach(m => {
+    const el = buildMessageEl(m);
+    stream.appendChild(el);
+  });
+}
+
+function buildMessageEl(m) {
+  const div = document.createElement('div');
+  div.id = 'msg_' + m.id;
+
+  if (m.type === 'text') {
+    div.className = `wa-bubble ${m.from === 'self' ? 'outgoing' : 'incoming'}`;
+    div.innerHTML = `<span class="bubble-text">${escHtml(m.text)}</span>
+      <div class="bubble-meta">
+        <span class="bubble-time">${fmtTime(m.time)}</span>
+        ${m.from === 'self' ? '<span class="bubble-tick">✓✓</span>' : ''}
+      </div>`;
+  } else if (m.type === 'voice') {
+    div.className = `wa-bubble ${m.from === 'self' ? 'outgoing' : 'incoming'}`;
+    const bars = (m.samples || Array.from({length:20}, () => Math.random()*20+3))
+      .map(h => `<span style="height:${Math.max(3,Math.min(28,h))}px"></span>`).join('');
+    div.innerHTML = `<div class="voice-bubble">
+      <button class="voice-play-btn" onclick="playVoice(this)" data-playing="0">▶</button>
+      <div class="voice-waveform">${bars}</div>
+      <span class="voice-duration">${fmtDuration(m.duration)}</span>
+    </div>
+    <div class="bubble-meta">
+      <span class="bubble-time">${fmtTime(m.time)}</span>
+      ${m.from === 'self' ? '<span class="bubble-tick">✓✓</span>' : ''}
+    </div>`;
+  }
+
+  return div;
+}
+
+function fmtDuration(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function playVoice(btn) {
+  const playing = btn.dataset.playing === '1';
+  // toggle state (no actual audio in this UI)
+  btn.dataset.playing = playing ? '0' : '1';
+  btn.textContent = playing ? '▶' : '⏸';
+  if (!playing) setTimeout(() => { btn.dataset.playing='0'; btn.textContent='▶'; }, 3000);
+}
+
+// ── Text input logic ──────────────────────────────────────────────────
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+
+textInput.addEventListener('input', () => {
+  textInput.style.height = 'auto';
+  textInput.style.height = Math.min(textInput.scrollHeight, 100) + 'px';
+  const hasText = textInput.value.trim().length > 0;
+  sendBtn.style.display = hasText ? 'grid' : 'none';
+  micBtn.style.display = hasText ? 'none' : 'grid';
+});
+
+textInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMessage(); }
+});
+
+document.getElementById('sendBtn').addEventListener('click', sendTextMessage);
+
+function sendTextMessage() {
+  if (!activeChat) return;
+  const text = textInput.value.trim();
+  if (!text) return;
+
+  const msg = { id: 'u' + Date.now(), type: 'text', from: 'self', text, time: nowTime() };
+  chatMessages[activeChat].push(msg);
+  textInput.value = '';
+  textInput.style.height = 'auto';
+  sendBtn.style.display = 'none';
+  micBtn.style.display = 'grid';
+
+  // append to stream
+  const stream = document.getElementById('messageStream');
+  stream.appendChild(buildMessageEl(msg));
+  stream.scrollTop = stream.scrollHeight;
+
+  // forward to elderml
+  dispatchToElderML({ type: 'text', text, contactId: activeChat, contactName: contactName(activeChat) });
+
+  // update preview
+  CONTACTS.find(c => c.id === activeChat).preview = text;
+  renderChatList();
+}
+
+// ── Voice recording ───────────────────────────────────────────────────
+let recInterval = null;
+let recSeconds = 0;
+let recWaveInterval = null;
+let mediaRecorder = null;
+let audioChunks = [];
+
+micBtn.addEventListener('click', startRecording);
+
+async function startRecording() {
+  if (!activeChat) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
+    mediaRecorder.start(100);
+
+    recSeconds = 0;
+    document.getElementById('recTimer').textContent = '0:00';
+    document.getElementById('recordingBar').classList.add('active');
+    document.querySelector('.wa-input-bar').style.display = 'none';
+
+    recInterval = setInterval(() => {
+      recSeconds++;
+      document.getElementById('recTimer').textContent = fmtDuration(recSeconds);
+    }, 1000);
+
+    // animated bars
+    const wf = document.getElementById('recWaveform');
+    wf.innerHTML = '';
+    for (let i = 0; i < 40; i++) {
+      const s = document.createElement('span');
+      s.style.cssText = `display:inline-block;width:3px;border-radius:2px;background:#25d366;height:4px;`;
+      wf.appendChild(s);
+    }
+    recWaveInterval = setInterval(() => {
+      wf.querySelectorAll('span').forEach(s => {
+        s.style.height = (4 + Math.random() * 24) + 'px';
+      });
+    }, 120);
+
+  } catch(e) {
+    // microphone not available – simulate recording
+    simulateRecording();
+  }
+}
+
+function simulateRecording() {
+  recSeconds = 0;
+  document.getElementById('recTimer').textContent = '0:00';
+  document.getElementById('recordingBar').classList.add('active');
+  document.querySelector('.wa-input-bar').style.display = 'none';
+
+  recInterval = setInterval(() => {
+    recSeconds++;
+    document.getElementById('recTimer').textContent = fmtDuration(recSeconds);
+  }, 1000);
+
+  const wf = document.getElementById('recWaveform');
+  wf.innerHTML = '';
+  for (let i = 0; i < 40; i++) {
+    const s = document.createElement('span');
+    s.style.cssText = `display:inline-block;width:3px;border-radius:2px;background:#25d366;height:4px;`;
+    wf.appendChild(s);
+  }
+  recWaveInterval = setInterval(() => {
+    wf.querySelectorAll('span').forEach(s => {
+      s.style.height = (4 + Math.random() * 24) + 'px';
+    });
+  }, 120);
+}
+
+document.getElementById('recCancel').addEventListener('click', cancelRecording);
+document.getElementById('recSend').addEventListener('click', finishRecording);
+
+function cancelRecording() {
+  stopRecordingCleanup();
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  }
+  mediaRecorder = null;
+  audioChunks = [];
+}
+
+function finishRecording() {
+  const duration = recSeconds;
+  stopRecordingCleanup();
+
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.addEventListener('stop', () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      sendVoiceMessage(duration, blob);
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      mediaRecorder = null;
+      audioChunks = [];
+    });
+    mediaRecorder.stop();
+  } else {
+    sendVoiceMessage(duration, null);
+    mediaRecorder = null;
+    audioChunks = [];
+  }
+}
+
+function stopRecordingCleanup() {
+  clearInterval(recInterval);
+  clearInterval(recWaveInterval);
+  recInterval = null;
+  recWaveInterval = null;
+  document.getElementById('recordingBar').classList.remove('active');
+  document.querySelector('.wa-input-bar').style.display = 'flex';
+}
+
+function sendVoiceMessage(duration, blob) {
+  if (!activeChat || duration < 1) return;
+
+  const samples = Array.from({length: 20}, () => Math.random() * 22 + 3);
+  const msg = { id: 'v' + Date.now(), type: 'voice', from: 'self', duration, samples, time: nowTime(), blob };
+  chatMessages[activeChat].push(msg);
+
+  const stream = document.getElementById('messageStream');
+  stream.appendChild(buildMessageEl(msg));
+  stream.scrollTop = stream.scrollHeight;
+
+  // forward to elderml
+  let audioUrl = null;
+  if (blob) {
+    audioUrl = URL.createObjectURL(blob);
+  }
+  dispatchToElderML({
+    type: 'voice',
+    duration,
+    audioUrl,
+    contactId: activeChat,
+    contactName: contactName(activeChat),
+    transcript: null,
+  });
+
+  CONTACTS.find(c => c.id === activeChat).preview = '🎤 Voice note';
+  renderChatList();
+}
+
+// ── Cross-window messaging to elderml ───────────────────────────────
+function dispatchToElderML(payload) {
+  const entry = {
+    id: 'wa_' + Date.now(),
+    timestamp: new Date().toISOString(),
+    ...payload,
+  };
+
+  // Write to shared localStorage so elderml dashboard can pick it up
+  try {
+    const existing = JSON.parse(localStorage.getItem('elderml_wa_inbox') || '[]');
+    existing.unshift(entry);
+    // keep last 100
+    localStorage.setItem('elderml_wa_inbox', JSON.stringify(existing.slice(0, 100)));
+
+    // Also post cross-window message if opener exists
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ source: 'whatsapp-elder', ...entry }, '*');
+    }
+  } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function contactName(id) {
+  return (CONTACTS.find(c => c.id === id) || {}).name || id;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderChatList();
+// auto-open first chat
+openChat('elder1');
+</script>
+</body>
+</html>
